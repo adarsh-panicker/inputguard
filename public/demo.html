@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InputGuard — Live Interactive Demo & Testing Sandbox</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-group h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #38bdf8;
+    }
+    .badge-pill {
+      background: #0369a1;
+      color: #e0f2fe;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .nav-links a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 14px;
+      margin-left: 20px;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover {
+      color: #f8fafc;
+    }
+    .main-container {
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 32px;
+      flex: 1;
+    }
+    @media (max-width: 860px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .form-group {
+      margin-bottom: 18px;
+      position: relative;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="text"], input[type="email"], input[type="tel"], textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #f8fafc;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, textarea:focus {
+      border-color: #38bdf8;
+    }
+    .sample-btn {
+      background: #334155;
+      border: none;
+      color: #94a3b8;
+      padding: 0 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .sample-btn:hover {
+      background: #475569;
+      color: #f8fafc;
+    }
+    .steps-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .step-item {
+      display: flex;
+      gap: 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 16px;
+      border-radius: 10px;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      background: #0284c7;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-content h4 {
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #e2e8f0;
+    }
+    .step-content p {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    .tech-stack-callout {
+      margin-top: 24px;
+      background: #0369a11a;
+      border: 1px solid #0284c7;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .tech-stack-callout h4 {
+      font-size: 13px;
+      color: #38bdf8;
+      margin-bottom: 6px;
+    }
+    .tech-stack-callout p {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: #64748b;
+      border-top: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-group">
+      <img src="assets/icon.svg" width="28" height="28" alt="InputGuard Logo" />
+      <h1>InputGuard</h1>
+      <span class="badge-pill">Testing Sandbox</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="https://github.com/your-username/inputguard" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Left: Phishing / Unsecured Form Simulator -->
+    <div class="card">
+      <div class="card-title">
+        <span>⚠️</span>
+        <h3>Simulated "Sketchy" Web Form</h3>
+      </div>
+      <p class="card-subtitle">
+        Simulates an untrusted web page asking for sensitive information. With the InputGuard extension active, watch the input fields react immediately as you type.
+      </p>
+
+      <form id="sketchyForm" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label>Full Legal Name</label>
+          <div class="input-row">
+            <input type="text" id="nameInput" placeholder="e.g. Johnathan Doe" />
+            <button type="button" class="sample-btn" onclick="fillField('nameInput', 'Johnathan Doe')">Sample</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="input-row">
+            <input type="email" id="emailInput" placeholder="e.g. user@example.com" />
+            <button type="button" class="sample-btn" onclick="fillField('emailInput', 'john.doe@security-test.org')">Sample</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Social Security Number (SSN)</label>
+          <div class="input-row">
+            <input type="text" id="ssnInput" placeholder="e.g. 123-45-6789" />
+            <button type="button" class="sample-btn" onclick="fillField('ssnInput', '123-45-6789')">Sample SSN</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Credit Card Number</label>
+          <div class="input-row">
+            <input type="text" id="ccInput" placeholder="e.g. 4532 0150 1234 5678" />
+            <button type="button" class="sample-btn" onclick="fillField('ccInput', '4532 0150 1234 5678')">Sample CC</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password or Secret Token</label>
+          <div class="input-row">
+            <input type="text" id="apiKeyInput" placeholder="e.g. AIzaSyB2v..." />
+            <button type="button" class="sample-btn" onclick="fillField('apiKeyInput', 'AIzaSyB2vQx_SAMPLE_SECRET_API_TOKEN_8921')">Sample Token</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <button type="submit" style="width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            Submit to External Server (Simulated)
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right: How It Works & Testing Guide -->
+    <div class="card">
+      <div class="card-title">
+        <span>🧪</span>
+        <h3>Interactive Judging & Testing Guide</h3>
+      </div>
+      <p class="card-subtitle">
+        Follow these steps to observe the Firebase AI Logic hybrid inference in action:
+      </p>
+
+      <ul class="steps-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Type expected safe data</h4>
+            <p>Click "Sample" on Name or Email. Because these are standard non-critical inputs, the field stays neutral with no alarm.</p>
+          </div>
+        </li>
+
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Type sensitive PII (SSN or Card)</h4>
+            <p>Click "Sample SSN" or type <code>123-45-6789</code>. The field immediately lights up with a <strong>red danger outline</strong> and an inline <strong>🔒 on-device</strong> badge appears!</p>
+          </div>
+        </li>
+
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Verify Zero-Egress Privacy</h4>
+            <p>Open Chrome DevTools → Network tab. Notice that <strong>zero keystroke data</strong> was transmitted to any server. Gemini Nano 4 classified the sensitive data completely locally.</p>
+          </div>
+        </li>
+
+        <li class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Open the Side Panel & Dashboard</h4>
+            <p>Click the extension icon or side panel. Anonymized security audit events (Category, Timestamp, Confidence, Domain) are logged in real time to <strong>Cloud Firestore</strong> via Firebase Auth.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="tech-stack-callout">
+        <h4>⚡ Powered by 6 Firebase Products:</h4>
+        <p>
+          <strong>Firebase AI Logic</strong> (Gemini Nano on-device + Gemini Flash cloud) &bull;
+          <strong>App Check</strong> &bull;
+          <strong>Authentication</strong> (Anonymous sign-in) &bull;
+          <strong>Firestore</strong> (Audit logging) &bull;
+          <strong>Remote Config</strong> (Runtime feature flags) &bull;
+          <strong>Hosting</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    InputGuard &bull; Built with Firebase AI Logic for the #BuildHybridAI Hackathon &bull; Open Source (Apache 2.0)
+  </footer>
+
+  <script>
+    function fillField(id, val) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = val;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  </script>
+</body>
+</html>

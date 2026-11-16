@@ -1,0 +1,22 @@
+{
+  "name": "inputguard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "InputGuard — AI Privacy Bodyguard for everything you type. On-device Gemini Nano 4 via Firebase AI Logic watches your input and warns before you share sensitive data with sites that don't need it.",
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
+    "deploy": "firebase deploy"
+  },
+  "dependencies": {
+    "firebase": "^13.0.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.96.0",
+    "webpack-cli": "^5.1.4",
+    "copy-webpack-plugin": "^12.0.2",
+    "html-webpack-plugin": "^5.6.0",
+    "mini-css-extract-plugin": "^2.9.0",
+    "css-loader": "^7.1.2"
+  }
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InputGuard</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="../assets/icon.svg" alt="logo" class="logo" width="32" height="32" />
+      <h1>InputGuard</h1>
+    </div>
+
+    <div class="status-card">
+      <div class="status-row">
+        <span class="status-label">Keystroke analysis</span>
+        <span class="status-value" id="locLabel">On-device (Gemini Nano 4)</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Site reputation</span>
+        <span class="status-value" id="cloudLabel">Cloud (Gemini)</span>
+      </div>
+      <div class="privacy-note">
+        <strong>🔒 On-device only.</strong> Keystrokes are analyzed locally by
+        Gemini Nano 4 via Firebase AI Logic. Cloud Gemini only sees the website
+        domain — never what you type.
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btnSignIn" class="btn">Sign in anonymously</button>
+      <button id="btnDashboard" class="btn ghost">Open dashboard</button>
+    </div>
+
+    <div id="userInfo" class="user-info hidden"></div>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Each signed-in (anonymous) user only reads/writes their own settings/events.
+    match /users/{uid}/settings/{doc=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /users/{uid}/events/{doc=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // Extension-level metadata (read for all signed-in users).
+    match /inputguard_meta/{doc=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}

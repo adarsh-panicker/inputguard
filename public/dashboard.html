@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InputGuard Dashboard</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "__FIREBASE_API_KEY__",
+      authDomain: "__PROJECT_ID__.firebaseapp.com",
+      projectId: "__PROJECT_ID__",
+      storageBucket: "__PROJECT_ID__.appspot.com",
+      messagingSenderId: "",
+      appId: "__APP_ID__",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) await signInAnonymously(auth);
+      const q = query(collection(db, "users", user.uid, "events"), orderBy("timestamp", "desc"), limit(20));
+      onSnapshot(q, (snap) => {
+        const list = document.getElementById("events");
+        list.innerHTML = "";
+        snap.forEach((doc) => {
+          const d = doc.data();
+          const li = document.createElement("li");
+          li.textContent = `${new Date(d.timestamp?.toDate ? d.timestamp.toDate() : d.timestamp).toLocaleString()} | ${d.domain} | ${d.category} | conf ${Math.round(d.confidence*100)}% | ${d.severe ? "SEVERE" : "notice"} | on-device: ${d.onDevice}`;
+          list.appendChild(li);
+        });
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>InputGuard Dashboard</h1>
+  <p>Anonymized analysis events (raw text never stored). <strong>You are signed in anonymously.</strong></p>
+  <ul id="events" style="max-width:700px;"></ul>
+</body>
+</html>
