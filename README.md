@@ -48,6 +48,35 @@ getGenerativeModel(ai, { mode: InferenceMode.ONLY_IN_CLOUD });
 `src/background.js` calls `analyzesite()` (cloud model, `generateContent`) for site reputation.
 Raw keystrokes are never sent to the cloud.
 
+## System Architecture
+
+```mermaid
+flowchart TD
+    User["⌨️ User Types in Any Web Form"] --> Content["Content Script (content.js)"]
+    
+    subgraph OnDevice ["🔒 ON-DEVICE (Gemini Nano 4 via Firebase AI Logic)"]
+        Content --> Nano["analyzePII() [InferenceMode.ONLY_ON_DEVICE]"]
+        Nano --> Classify["Classify Keystroke Sensitivity\n(SSN, Credit Card, Passwords, etc.)"]
+        Classify --> Badge["Real-time Visual Outline & 🔒 Badge\n(Zero data leaves device)"]
+    end
+
+    subgraph CloudLayer ["☁️ CLOUD (Gemini Flash via Firebase AI Logic)"]
+        Content -.->|"Domain + Title Only\n(Never raw text)"| Worker["Background Worker (background.js)"]
+        Worker --> Flash["analyzesite() [InferenceMode.ONLY_IN_CLOUD]"]
+        Flash --> Rep["Site Trust & Phishing Scoring"]
+    end
+
+    subgraph FirebaseStack ["🔥 Firebase Cloud Ecosystem"]
+        Worker --> Auth["Firebase Authentication (Anonymous)"]
+        Worker --> FS["Cloud Firestore (Anonymized Audit Log)"]
+        Content --> RC["Firebase Remote Config (Dynamic Feature Flags)"]
+        Hosting["Firebase Hosting (Landing Page & Sandbox)"]
+    end
+
+    Badge --> User
+    FS --> Panel["Side Panel & Dashboard (Live Event Stream)"]
+```
+
 ## 6 Firebase products used
 
 | Product | Role |
