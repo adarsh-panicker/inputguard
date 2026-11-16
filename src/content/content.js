@@ -17,19 +17,19 @@ import {
 } from '../utils/constants.js';
 
 // Importing config.js runs Firebase init + App Check at runtime in this context.
-import '../firebase/config.js';
+import { app } from '../firebase/config.js';
 import { getRemoteConfig, fetchAndActivate, getBoolean } from 'firebase/remote-config';
 
-const rc = getRemoteConfig();
 let onDeviceEnabled = true;
 let cloudReputationEnabled = true;
 (async () => {
   try {
+    const rc = getRemoteConfig(app);
     await fetchAndActivate(rc);
     onDeviceEnabled = getBoolean(rc, 'onDeviceEnabled');
     cloudReputationEnabled = getBoolean(rc, 'cloudReputationEnabled');
   } catch (_) {
-    // fall back to defaults above
+    // fall back to default enabled
   }
 })();
 
@@ -48,10 +48,11 @@ function styleFor(severity) {
 }
 
 function setBadge(el, risk) {
-  const parent = el.parentElement;
-  if (!parent) return;
-  const old = parent.querySelector('.inputguard-badge');
+  const container = el.closest('.form-group') || el.parentElement;
+  if (!container) return;
+  const old = container.querySelector('.inputguard-badge');
   if (old) old.remove();
+
   el.classList.remove(
     'inputguard-safe',
     'inputguard-caution',
@@ -64,29 +65,31 @@ function setBadge(el, risk) {
   el.classList.add(`inputguard-${risk.level}`);
   el.style.outline = `3px solid ${risk.borderColor}`;
   el.style.outlineOffset = '2px';
-  el.style.borderRadius = '4px';
+  el.style.borderRadius = '6px';
 
   const badge = document.createElement('div');
   badge.className = 'inputguard-badge';
   badge.style.cssText =
-    'position:absolute;z-index:2147483647;display:inline-flex;align-items:center;gap:6px;background:#111827;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.25);white-space:nowrap;cursor:pointer;user-select:none;';
+    'position:absolute;z-index:2147483647;display:inline-flex;align-items:center;gap:6px;background:#111827;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.35);white-space:nowrap;cursor:pointer;user-select:none;right:0;top:0;';
   badge.title = 'InputGuard: Click to open privacy audit log in side panel';
-  badge.innerHTML = `<span>${risk.icon}</span> <span>${risk.label}</span> <span style="opacity:.85;font-size:10px;">🔒 on-device</span>`;
+  badge.innerHTML = `<span>${risk.icon}</span> <span>${risk.label}</span> <span style="opacity:.85;font-size:10px;color:#86efac;">🔒 on-device</span>`;
   badge.addEventListener('click', (e) => {
     e.stopPropagation();
-    chrome.runtime.sendMessage({ type: 'OPEN_SIDEPANEL' });
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({ type: 'OPEN_SIDEPANEL' });
+    }
   });
 
-  if (!parent.style.position) parent.style.position = 'relative';
-  parent.insertAdjacentElement('afterend', badge);
-  badge.style.left = el.offsetLeft + 'px';
-  badge.style.top = Math.max(0, el.offsetTop - 26) + 'px';
+  if (!container.style.position || container.style.position === 'static') {
+    container.style.position = 'relative';
+  }
+  container.appendChild(badge);
 }
 
 function clearBadge(el) {
-  const parent = el.parentElement;
-  if (parent) {
-    const old = parent.querySelector('.inputguard-badge');
+  const container = el.closest('.form-group') || el.parentElement;
+  if (container) {
+    const old = container.querySelector('.inputguard-badge');
     if (old) old.remove();
   }
   el.classList.remove(
@@ -100,10 +103,17 @@ function clearBadge(el) {
 
 function getSiteTrust(url, pageTitle) {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage(
-      { type: MSG.ANALYZE_SITE, url, pageTitle },
-      (res) => resolve(res && res.ok ? res.result : null)
-    );
+    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+      return resolve(null);
+    }
+    try {
+      chrome.runtime.sendMessage(
+        { type: MSG.ANALYZE_SITE, url, pageTitle },
+        (res) => resolve(res && res.ok ? res.result : null)
+      );
+    } catch (_) {
+      resolve(null);
+    }
   });
 }
 
@@ -134,30 +144,36 @@ async function analyzeInput(el) {
 
   // ☁️ CLOUD: site reputation — domain + title only, never raw text
   if (pii.hasPII && ['critical', 'high'].includes(pii.severity) && cloudReputationEnabled) {
-    siteTrust = await getSiteTrust(location.href, document.title);
-    if (
-      siteTrust &&
-      ['suspicious', 'dangerous'].includes(siteTrust.trustLevel)
-    ) {
-      finalRisk = RISK_LEVELS.DANGER;
-    }
+    try {
+      siteTrust = await getSiteTrust(location.href, document.title);
+      if (
+        siteTrust &&
+        ['suspicious', 'dangerous'].includes(siteTrust.trustLevel)
+      ) {
+        finalRisk = RISK_LEVELS.DANGER;
+      }
+    } catch (_) {}
   }
 
   if (pii.hasPII) {
     setBadge(el, finalRisk);
 
     // Log anonymized audit event to Firebase & local storage (NO raw text ever stored)
-    chrome.runtime.sendMessage({
-      type: 'LOG_EVENT',
-      event: {
-        domain: location.hostname || 'web-form',
-        category: pii.detections?.[0]?.type?.toUpperCase() || 'PII',
-        confidence: pii.detections?.[0]?.confidence || 0.95,
-        severe: ['critical', 'high'].includes(pii.severity) || finalRisk.level === 'danger',
-        onDevice: true,
-        timestamp: Date.now()
-      }
-    });
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      try {
+        chrome.runtime.sendMessage({
+          type: 'LOG_EVENT',
+          event: {
+            domain: location.hostname || 'web-form',
+            category: pii.detections?.[0]?.type?.toUpperCase() || 'PII',
+            confidence: pii.detections?.[0]?.confidence || 0.95,
+            severe: ['critical', 'high'].includes(pii.severity) || finalRisk.level === 'danger',
+            onDevice: true,
+            timestamp: Date.now()
+          }
+        });
+      } catch (_) {}
+    }
   } else {
     clearBadge(el);
   }
