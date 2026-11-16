@@ -166,17 +166,6 @@ InputGuard comes pre-wired with safe local fallbacks so anyone can evaluate it w
 
 ---
 
-## 🎬 Demo Video Guide (≤ 3 Minutes for Devpost)
-
-When recording your submission video:
-1. **0:00 - 0:30:** Explain the problem (users constantly paste SSNs/cards into phishing or sketchy forms; cloud security checkers violate privacy).
-2. **0:30 - 1:15:** Open `public/demo.html`. Type standard name (green/neutral), then type an SSN (lights up red with `🔒 on-device` badge).
-3. **1:15 - 1:45:** Show Chrome DevTools Network tab — prove zero keystrokes were transmitted over the network.
-4. **1:45 - 2:20:** Open the extension Side Panel — show live audit events logging to Firestore in real time.
-5. **2:20 - 3:00:** Explain the 6 Firebase products used and wrap up.
-
----
-
 ## 📄 License
 
 Apache 2.0 — see [`LICENSE`](LICENSE).
