@@ -1,54 +1,22 @@
-# InputGuard — AI Privacy Bodyguard for Everything You Type
+# 🛡️ InputGuard — AI Privacy Bodyguard for Everything You Type
 
-A Chrome extension that watches what you type in real time and warns you before you share sensitive data with sites that don't need it.
+> **#BuildHybridAI 2026** — Official Hackathon Submission  
+> Built with **Firebase AI Logic** combining on-device **Gemini Nano 4** and cloud-hosted **Gemini Flash**.
 
-**All AI inference runs through Firebase AI Logic — never a direct model API call.**
+---
 
-## The pitch
-- **On-device (Gemini Nano 4 via Firebase AI Logic):** classifies every keystroke for sensitivity (PII, passwords, financial, health…). Keystrokes never leave your device. Works offline.
-- **Cloud (Gemini Flash via Firebase AI Logic):** scores website reputation — domain + page title only, never raw text.
-- A 🔒 badge proves the analysis ran on-device. Sensitive + untrusted = field turns red.
+## 📌 Overview
 
-## Why this wins
-- ❌ Nothing like it exists — no real-time, on-device, AI-powered input privacy guard.
-- 🔒 Genuine hybrid AI: privacy-critical analysis must be on-device; deep reputation needs the cloud.
-- 🎬 Demo that stops scrollers: type into a sketchy form, watch fields turn red in real time, see the 🔒 "on-device" lock.
-- 🔥 Uses 6 Firebase products: AI Logic, App Check, Auth, Firestore, Remote Config, Hosting.
+**InputGuard** is a Chrome extension and full-stack web application that watches what you type in real time and warns you before you leak sensitive information (SSNs, credit cards, credentials, API keys) into untrusted or malicious web forms.
 
-## Firebase AI Logic usage (runtime, not README-only)
+**Zero keystroke data ever leaves your device.** 
 
-InputGuard uses the Firebase AI Logic Web SDK (`firebase/ai`) with `InferenceMode`:
+- **🔒 On-Device (`InferenceMode.ONLY_ON_DEVICE` via Gemini Nano 4):** Evaluates keystroke sensitivity with millisecond latency right inside your browser sandbox. Works 100% offline.
+- **☁️ Cloud (`InferenceMode.ONLY_IN_CLOUD` via Gemini Flash):** Evaluates website domain reputation and phishing risk — receiving only the domain and page title, never your raw inputs.
 
-`src/firebase/config.js` — Firebase app + AI Logic + App Check initialized at runtime:
+---
 
-```js
-import { initializeApp } from 'firebase/app';
-import { getAI, GoogleAIBackend } from 'firebase/ai';
-import { initializeAppCheck } from 'firebase/app-check';
-
-const app = initializeApp(firebaseConfig);
-initializeAppCheck(app, { /* ReCaptchaEnterpriseProvider / debug token */ });
-const ai = getAI(app, { backend: new GoogleAIBackend() });
-```
-
-`src/firebase/ai-engine.js` — models created from the Firebase AI Logic instance:
-
-```js
-import { getGenerativeModel, InferenceMode } from 'firebase/ai';
-import { ai } from './config.js';
-
-// 🔒 ON-DEVICE: Gemini Nano 4 — keystrokes never leave the device
-getGenerativeModel(ai, { mode: InferenceMode.ONLY_ON_DEVICE });
-
-// ☁️ CLOUD: Gemini Flash — site reputation (domain + title only)
-getGenerativeModel(ai, { mode: InferenceMode.ONLY_IN_CLOUD });
-```
-
-`src/content/content.js` calls `analyzePII()` (on-device model, `generateContent`) on every input event.
-`src/background.js` calls `analyzesite()` (cloud model, `generateContent`) for site reputation.
-Raw keystrokes are never sent to the cloud.
-
-## System Architecture
+## 🏆 System Architecture
 
 ```mermaid
 flowchart TD
@@ -67,7 +35,7 @@ flowchart TD
     end
 
     subgraph FirebaseStack ["🔥 Firebase Cloud Ecosystem"]
-        Worker --> Auth["Firebase Authentication (Anonymous)"]
+        Worker --> Auth["Firebase Authentication (Anonymous Sign-In)"]
         Worker --> FS["Cloud Firestore (Anonymized Audit Log)"]
         Content --> RC["Firebase Remote Config (Dynamic Feature Flags)"]
         Hosting["Firebase Hosting (Landing Page & Sandbox)"]
@@ -77,48 +45,138 @@ flowchart TD
     FS --> Panel["Side Panel & Dashboard (Live Event Stream)"]
 ```
 
-## 6 Firebase products used
+---
 
-| Product | Role |
-|---|---|
-| **Firebase AI Logic** | On-device Gemini Nano 4 (input sensitivity) + cloud Gemini Flash (site reputation) — sole AI path |
-| **App Check** | Required by Firebase AI Logic; initialized in `src/firebase/config.js` (debug token accepted in dev/submission) |
-| **Auth** | Anonymous sign-in so user settings & events sync (`src/popup/popup.js`, `src/sidepanel/sidepanel.js`) |
-| **Firestore** | User-scoped anonymized analysis events (no raw text stored) |
-| **Remote Config** | Gates on-device analysis & cloud reputation at runtime (`src/content/content.js`, `src/popup/popup.js`) |
-| **Hosting** | Public landing page + dashboard (`public/`, deployed via `firebase deploy`) |
+## 🔥 6 Firebase Products Integrated at Runtime
 
-## Quick start
+InputGuard strictly adheres to the hackathon rule: *all AI inference runs through Firebase AI Logic at runtime.*
+
+| Product | Role in InputGuard | Source Location |
+|---|---|---|
+| **Firebase AI Logic** | On-device Gemini Nano 4 (`ONLY_ON_DEVICE`) + cloud Gemini Flash (`ONLY_IN_CLOUD`). | `src/firebase/ai-engine.js` |
+| **Firebase App Check** | Secures cloud inference and client requests with debug tokens/reCAPTCHA Enterprise. | `src/firebase/config.js` |
+| **Firebase Authentication** | Zero-friction anonymous sign-in isolating user audit logs and settings. | `src/popup/popup.js`, `src/background.js` |
+| **Cloud Firestore** | Stores anonymized security incident logs (domain, category, timestamp — never raw text). | `src/sidepanel/sidepanel.js` |
+| **Firebase Remote Config** | Dynamically gates on-device AI and cloud checks at runtime without redeploying. | `src/content/content.js` |
+| **Firebase Hosting** | Serves the public landing page, interactive demo sandbox, and web dashboard. | `public/`, `firebase.json` |
+
+---
+
+## 🧪 How to Test the App (Step-by-Step Guide)
+
+You can test InputGuard **locally in under 3 minutes**!
+
+### Step 1: Build the Extension
+
+Ensure you are in the `inputguard` directory:
 
 ```bash
 cd inputguard
 npm install
-npm run build          # webpack -> dist/
+npm run build
 ```
 
-1. Create a Firebase project and enable **Firebase AI Logic**, **App Check**, **Authentication**, **Firestore**, **Remote Config**, **Hosting**.
-2. Copy your web app config into `src/firebase/config.js` (replace `YOUR_*` placeholders).
-3. Get an **App Check debug token** from Firebase Console → App Check → Debug tokens (accepted for submissions).
-4. Set Remote Config parameters: `onDeviceEnabled` (bool), `cloudReputationEnabled` (bool).
-5. Load the extension: Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → select the `dist` folder.
-6. Host the landing page: `firebase deploy` (Hosting serves `public/`).
+This compiles all TypeScript/ES modules into the production-ready `dist/` folder.
 
-## Demo video (submit to YouTube, ≤ 3 min, public, English)
-1. Open InputGuard on a normal site → type → all clear.
-2. Open a sketchy demo form → type "My SSN is 123-45-6789" → field pulses red, 🔒 on-device badge appears.
-3. Open popup → show "On-device (Gemini Nano 4)" + "Cloud (Gemini)".
-4. Open side panel → show anonymized events logged to Firestore (no raw text).
-Upload to YouTube and link it on the submission form.
+---
 
-## Submission checklist
-- [ ] Public GitHub repo with this source + Apache 2.0 `LICENSE` (detectable in the repo About section)
-- [ ] Firebase AI Logic imported and called at runtime in `src/firebase/*`, `src/content/content.js`, `src/background.js`
-- [ ] Text description: Firebase AI Logic usage + feature summary + value proposition (below)
-- [ ] YouTube demo video (≤3 min, public, English) — link on submission form
-- [ ] Optional hosted URL: Firebase Hosting landing page + Chrome extension
+### Step 2: Load the Extension into Google Chrome
 
-## Value proposition
-InputGuard is the first real-time, on-device AI privacy bodyguard for the browser. It protects users from accidentally leaking sensitive data to untrusted websites — with zero keystroke data leaving the device — while still using cloud AI where it actually adds value (site reputation). Built entirely on Firebase AI Logic.
+1. Open **Google Chrome** (Chrome 139+ recommended for native Gemini Nano).
+2. In the address bar, navigate to:
+   ```text
+   chrome://extensions
+   ```
+3. In the top-right corner, toggle **Developer mode** to **ON**.
+4. Click the **Load unpacked** button in the top-left.
+5. Select the `dist` folder located at:
+   ```text
+   d:\Personal\Opencode\Google firebase\inputguard\dist
+   ```
+6. You will see **InputGuard** appear in your extension list with its blue shield icon!
 
-## License
-Apache 2.0 — see `LICENSE`.
+*(Optional Chrome AI Flag)*: To enable native Gemini Nano on-device AI in Chrome:
+- Navigate to `chrome://flags/#prompt-api-for-gemini-nano` → Set to **Enabled**.
+- Navigate to `chrome://flags/#optimization-guide-on-device-model` → Set to **Enabled Bypass Requirement**.
+- Relaunch Chrome. *(Note: InputGuard automatically uses local regex fallback if Gemini Nano is not enabled on your hardware, so the demo works regardless).*
+
+---
+
+### Step 3: Test on the Interactive Demo Sandbox
+
+InputGuard includes an interactive phishing form simulator built specifically for testing and demos:
+
+1. In Chrome, open the local demo page:
+   - Double-click or open `dist/public/demo.html` in Chrome (or navigate to `file:///d:/Personal/Opencode/Google%20firebase/inputguard/dist/public/demo.html`).
+2. You will see the **Simulated "Sketchy" Web Form**.
+3. **Test Normal Input:**
+   - Type `John Doe` into Full Name.
+   - The field remains clean and neutral (safe).
+4. **Test Sensitive PII Input (SSN):**
+   - Click the **"Sample SSN"** button (or type `123-45-6789`).
+   - **Observe:** The input border immediately turns **bold red**, and an inline badge appears:
+     ```text
+     🔴 Danger 🔒 on-device
+     ```
+5. **Test Credit Card Input:**
+   - Click **"Sample CC"** (or type `4532 0150 1234 5678`).
+   - **Observe:** Immediate real-time red outline classification.
+6. **Verify Zero-Egress Privacy:**
+   - Press `F12` to open Chrome DevTools → switch to the **Network** tab.
+   - Type or paste an SSN.
+   - Notice that **zero network requests** containing your input were sent. Everything ran locally.
+
+---
+
+### Step 4: Test the Side Panel & Live Audit Log
+
+1. In Chrome, click the **Extensions puzzle icon** in the toolbar and click **InputGuard**.
+2. Click **"Open dashboard"** (or right-click the extension icon and select **Open Side Panel**).
+3. The side panel opens showing your **live anonymized security audit trail**.
+4. As you type sensitive data into any web form, an event immediately logs:
+   - **Timestamp**
+   - **Domain:** `web-form` / `localhost`
+   - **Category:** `SSN` or `CREDIT_CARD`
+   - **Confidence:** `95%`
+   - **Status:** `SEVERE`
+   - **Engine:** `🔒 on-device`
+5. Notice that the actual numbers (`123-45-6789`) are **NEVER saved** — strictly preserving zero-knowledge privacy.
+
+---
+
+### Step 5: (Optional) Connect Your Own Firebase Project
+
+InputGuard comes pre-wired with safe local fallbacks so anyone can evaluate it without configuring cloud keys. To connect your live Firebase project:
+
+1. Open `src/firebase/config.js` and paste your web app credentials from the [Firebase Console](https://console.firebase.google.com/):
+   ```js
+   const firebaseConfig = {
+     apiKey: "YOUR_ACTUAL_API_KEY",
+     authDomain: "your-project.firebaseapp.com",
+     projectId: "your-project-id",
+     // ...
+   };
+   ```
+2. Enable **Firebase AI Logic**, **App Check**, **Authentication (Anonymous)**, **Firestore**, and **Remote Config** in your Firebase console.
+3. Re-run `npm run build` and click reload on the extension in `chrome://extensions`.
+4. Deploy the hosted sandbox:
+   ```bash
+   firebase deploy
+   ```
+
+---
+
+## 🎬 Demo Video Guide (≤ 3 Minutes for Devpost)
+
+When recording your submission video:
+1. **0:00 - 0:30:** Explain the problem (users constantly paste SSNs/cards into phishing or sketchy forms; cloud security checkers violate privacy).
+2. **0:30 - 1:15:** Open `public/demo.html`. Type standard name (green/neutral), then type an SSN (lights up red with `🔒 on-device` badge).
+3. **1:15 - 1:45:** Show Chrome DevTools Network tab — prove zero keystrokes were transmitted over the network.
+4. **1:45 - 2:20:** Open the extension Side Panel — show live audit events logging to Firestore in real time.
+5. **2:20 - 3:00:** Explain the 6 Firebase products used and wrap up.
+
+---
+
+## 📄 License
+
+Apache 2.0 — see [`LICENSE`](LICENSE).
